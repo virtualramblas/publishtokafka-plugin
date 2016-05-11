@@ -30,7 +30,7 @@
 
   <name>Publish to Kafka Plugin</name>
   <description>Publishes the build jobs execution data to Kafka topics.</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Publish+to+Kafka+Plugin</url>
+  <url>https://github.com/virtualramblas/publishtokafka-plugin</url>
 
   <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed. -->
 

@@ -19,7 +19,11 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,9 +97,12 @@ public class PublishToKafkaBuilder extends Recorder {
 		jsonObject.put("buildNumber", build.getNumber());
 		jsonObject.put("name", build.getFullDisplayName().substring(0, build.getFullDisplayName().lastIndexOf(" #")));
 		jsonObject.put("startDate", new Date(build.getStartTimeInMillis()));
-		jsonObject.put("duration", build.getDuration());
-		jsonObject.put("endDate", new Date());
+		Date endDate = Calendar.getInstance().getTime();
+		jsonObject.put("endDate", endDate);
+		jsonObject.put("duration", endDate.getTime() - build.getStartTimeInMillis());
 		jsonObject.put("result", build.getResult().toString());
+		
+		addParameters(build, jsonObject);
 		
 		try {
 			envVars = build.getEnvironment(listener);
@@ -105,6 +112,8 @@ public class PublishToKafkaBuilder extends Recorder {
 			
 			jsonObject.put("nodeName", envVars.get("NODE_NAME"));
 			jsonObject.put("computerName", envVars.get("COMPUTERNAME"));
+			
+			addNodeDetails(build, jsonObject, envVars);
 		} catch (IOException e) {
 			listener.getLogger().println("Exception trying to get the env variables: " + e.getMessage());
 		} catch (InterruptedException e) {
@@ -113,6 +122,70 @@ public class PublishToKafkaBuilder extends Recorder {
 		
 		return jsonObject;
     }
+    
+    /**
+     * Adds the build job parameters key:value pairs to the JSON output.
+     * 
+     * @param build
+     * @param jsonObject
+     */
+    private void addParameters(AbstractBuild build, JSONObject jsonObject) {
+    	Map<String, String> buildVariables = build.getBuildVariables();
+		if(buildVariables.size() > 0) {
+			JSONObject parametersJsonObject = new JSONObject();
+			for(String key: buildVariables.keySet()) {
+				parametersJsonObject.put(key, buildVariables.get(key));
+			}
+			jsonObject.put("parameters", parametersJsonObject);
+		}
+    }
+    
+    /**
+     * Adds the details about the node where the job has been executed to the JSON output.
+     * 
+     * @param build
+     * @param jsonObject
+     * @param envVars
+     */
+    private void addNodeDetails(AbstractBuild build, JSONObject jsonObject, EnvVars envVars) {
+    	JSONObject nodeDetailsJsonObject = new JSONObject();
+    	nodeDetailsJsonObject.put("nodeLabels", envVars.get("NODE_LABELS"));
+    	nodeDetailsJsonObject.put("OS", envVars.get("OS"));
+    	nodeDetailsJsonObject.put("numberOfProcessors", envVars.get("NUMBER_OF_PROCESSORS"));
+    	nodeDetailsJsonObject.put("processorArchitecture", envVars.get("PROCESSOR_ARCHITECTURE"));
+    	nodeDetailsJsonObject.put("processorArchitectureW6432", envVars.get("PROCESSOR_ARCHITEW6432"));
+    	nodeDetailsJsonObject.put("processorIdentifier", envVars.get("PROCESSOR_IDENTIFIER"));
+    	String computerName = "";
+    	if(envVars.get("COMPUTERNAME") != null && !envVars.get("COMPUTERNAME").equals("")) {
+    		computerName = envVars.get("COMPUTERNAME");
+		} else {
+			computerName = getComputerNameFromJenkinsUrl(envVars.get("JENKINS_URL"));
+		}
+    	nodeDetailsJsonObject.put("computerName", computerName);
+    	
+    	jsonObject.put("nodeDetails", nodeDetailsJsonObject);
+    }
+    
+    /**
+     * Returns the name of the node where the job has been executed.
+     * 
+     * @param jenkinsUrl The Jenkins URL on the given node
+     * @return The node name
+     */
+    private String getComputerNameFromJenkinsUrl(String jenkinsUrl) {
+		String computerName = new String();
+		
+		// Get the name + port
+		String[] urlTokens = jenkinsUrl.split("/");
+		computerName = urlTokens[2];
+		// Remove port (if any)
+		int portPosition = computerName.indexOf(":");
+		if(portPosition != -1) {
+			computerName = computerName.substring(0, computerName.indexOf(":"));
+		}
+		
+		return computerName;
+	}
     
     /**
      * Publishes the build job current execution data to a Kafka topic.

@@ -59,8 +59,9 @@ Then you can install it on your server simply uploading it through the *Manage J
 I didn't use intentionally any Java 8 feature while implementing this plugin in order to ensure compatibility with Jenkins servers still running on JVM 7 as well. 
   
 ### Releases 
-At present time 2 releases are available:  
-* 0.8: Fixed bug [#4](https://github.com/virtualramblas/publishtokafka-plugin/issues/4) . Implemented enhancements [#1](https://github.com/virtualramblas/publishtokafka-plugin/issues/1) and [#2](https://github.com/virtualramblas/publishtokafka-plugin/issues/2)
+3 releases are available so far:  
+* 0.9: Fixed bug [#8](https://github.com/virtualramblas/publishtokafka-plugin/issues/8). Implemented enhancement [#7](https://github.com/virtualramblas/publishtokafka-plugin/issues/7) and change request [#6](https://github.com/virtualramblas/publishtokafka-plugin/issues/6).  
+* 0.8: Fixed bug [#4](https://github.com/virtualramblas/publishtokafka-plugin/issues/4) . Implemented enhancements [#1](https://github.com/virtualramblas/publishtokafka-plugin/issues/1) and [#2](https://github.com/virtualramblas/publishtokafka-plugin/issues/2)  
 * 0.7: initial release
   
       

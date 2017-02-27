@@ -9,7 +9,35 @@ A Jenkins post-build action plugin to publish build jobs execution data to Kafka
 [Kafka](http://kafka.apache.org/) is an Open Source message broker written in [Scala](http://www.scala-lang.org/) and currently maintained by the [Apache Software Foundation](http://www.apache.org/). It is fast, scalable, and has a modern cluster-centric design aimed to provide strong durability and fault-tolerance guarantees.  
   
 ### Features  
-This plugin publishes the build jobs execution details in JSON format to a Kafka topic. In the latest release the general info about a build job, details about the host (master or slave) where a build job has been executed and the full set of parameters values for a given execution are collected. Future releases will collect also all of the details about each single build step.  
+This plugin publishes the build jobs execution details in JSON format to a Kafka topic. In the latest release the general info about a build job, details about the host (master or slave) where a build job has been executed and the full set of parameters values for a given execution are collected. Future releases will collect also all of the details about each single build step.  Here's an example of the current JSON message content sent to a topic:  
+  
+```json  
+{
+	"buildNumber":1,
+	"name":"KafkaTest",
+	"startDate":{
+		"date":27,"day":1,"hours":9,"minutes":36,"month":1,"seconds":52,
+		"time":1488188212126,"timezoneOffset":0,"year":117
+	},
+	"endDate":{
+		"date":27,"day":1,"hours":9,"minutes":36,"month":1,"seconds":53,
+		"time":1488188213394,"timezoneOffset":0,"year":117
+	},
+	"duration":1268,
+	"result":"SUCCESS",
+	"nodeName":"master",
+	"computerName":"XXXXXXXX",
+	"nodeDetails":{
+		"nodeLabels":"master",
+		"OS":"Windows_NT",
+		"numberOfProcessors":"4",
+		"processorArchitecture":"x86",
+		"processorArchitectureW6432":
+		"AMD64","processorIdentifier":"Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+		"computerName":"XXXXXXXX"
+}
+```  
+  
 After publishing them to the destination topic they can then be consumed by other systems in order to generate stats and/or perform analytics upon them.  
 At the moment just a small set of parameters can be configured for the underlying Kafka producer. Future releases will allow a more advanced configuration.
   

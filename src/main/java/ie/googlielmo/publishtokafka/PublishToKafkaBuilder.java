@@ -410,7 +410,7 @@ public class PublishToKafkaBuilder extends Recorder {
 
 	@Override
 	public BuildStepMonitor getRequiredMonitorService() {
-		return BuildStepMonitor.STEP;
+		return BuildStepMonitor.NONE;
 	}
 
 	public String getBootstrapServers() {

@@ -55,16 +55,21 @@ public class PublishToKafkaBuilder extends Recorder {
     private final String topic;
     /** Flag to exclude the plugin from build job execution */
     private final boolean excludePlugin;
-
+    /** Flag to modify the build job execution status: 
+     * if checked, any failure in the plugin execution will mark the build job as failed. */
+    private final boolean changeBuildStatus;
+    
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public PublishToKafkaBuilder(String bootstrapServers, String metadataBrokerList,
-    		String acks, String topic, boolean excludePlugin) {
+    		String acks, String topic, boolean excludePlugin, 
+    		boolean changeBuildStatus) {
         this.bootstrapServers = bootstrapServers;
         this.metadataBrokerList = metadataBrokerList;
         this.acks = acks;
         this.topic = topic;
         this.excludePlugin = excludePlugin;
+        this.changeBuildStatus = changeBuildStatus;
     }
 
     @Override
@@ -79,9 +84,14 @@ public class PublishToKafkaBuilder extends Recorder {
         	envVars = null;
         	// Publish to Kafka
         	result = publishToKafkaTopic(buildJob, listener);
+        	if(result == false) {
+        		if(isChangeBuildStatus() == false) {
+        			result = true;
+        		}
+        	}
     	}
     	
-        return result;
+    	return result;
     }
 
     /**
@@ -213,7 +223,9 @@ public class PublishToKafkaBuilder extends Recorder {
 			listener.getLogger().println("Exception trying to publish: " + e.getMessage());
 		} finally {
 			// Close the connection
-			producer.closeConnection();
+			if(producer != null) {
+				producer.closeConnection();
+			}
 		}
     	
     	return success;
@@ -249,6 +261,7 @@ public class PublishToKafkaBuilder extends Recorder {
         private String acks;
         private String topic;
         private boolean excludePlugin;
+        private boolean changeBuildStatus;
 
         /**
          * In order to load the persisted global configuration, you have to 
@@ -380,6 +393,7 @@ public class PublishToKafkaBuilder extends Recorder {
         	acks = formData.getString("acks");
         	topic = formData.getString("topic");
         	excludePlugin = formData.getBoolean("excludePlugin");
+        	changeBuildStatus = formData.getBoolean("changeBuildStatus");
         	
             // ^Can also use req.bindJSON(this, formData);
             //  (easier when there are many fields; need set* methods for this, like setUseFrench)
@@ -405,6 +419,10 @@ public class PublishToKafkaBuilder extends Recorder {
 
 		public boolean isExcludePlugin() {
 			return excludePlugin;
+		}
+
+		public boolean isChangeBuildStatus() {
+			return changeBuildStatus;
 		}
     }
 
@@ -450,6 +468,14 @@ public class PublishToKafkaBuilder extends Recorder {
 			return true;
 		} else {
 			return excludePlugin;
+		}
+	}
+
+	public boolean isChangeBuildStatus() {
+		if(getDescriptor().isChangeBuildStatus()) {
+			return true;
+		} else {
+			return changeBuildStatus;
 		}
 	}
 }

@@ -13,18 +13,22 @@ This plugin publishes the build jobs execution details in JSON format to a Kafka
   
 ```json  
 {
-	"buildNumber":1,
-	"name":"KafkaTest",
+	"buildNumber":22,
+	"name":"KTest",
 	"startDate":{
-		"date":27,"day":1,"hours":9,"minutes":36,"month":1,"seconds":52,
-		"time":1488188212126,"timezoneOffset":0,"year":117
+		"date":1,"day":3,"hours":13,"minutes":11,"month":2,"seconds":14,
+		"time":1488373874299,"timezoneOffset":0,"year":117
 	},
 	"endDate":{
-		"date":27,"day":1,"hours":9,"minutes":36,"month":1,"seconds":53,
-		"time":1488188213394,"timezoneOffset":0,"year":117
+		"date":1,"day":3,"hours":13,"minutes":11,"month":2,"seconds":15,
+		"time":1488373875984,"timezoneOffset":0,"year":117
 	},
-	"duration":1268,
+	"duration":1685,
 	"result":"SUCCESS",
+	"parameters":{
+		"MONGODB_HOST":"mongodb1.xxx.com",
+		"MONGODB_PORT":"27018"
+	},
 	"nodeName":"master",
 	"computerName":"XXXXXXXX",
 	"nodeDetails":{
@@ -32,10 +36,11 @@ This plugin publishes the build jobs execution details in JSON format to a Kafka
 		"OS":"Windows_NT",
 		"numberOfProcessors":"4",
 		"processorArchitecture":"x86",
-		"processorArchitectureW6432":
-		"AMD64","processorIdentifier":"Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+		"processorArchitectureW6432":"AMD64",
+		"processorIdentifier":"Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
 		"computerName":"XXXXXXXX"
-}
+	}
+}  
 ```  
   
 After publishing them to the destination topic they can then be consumed by other systems in order to generate stats and/or perform analytics upon them.  

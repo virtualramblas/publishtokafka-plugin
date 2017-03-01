@@ -11,7 +11,7 @@
   </parent>
   <groupId>ie.googlielmo</groupId>
   <artifactId>publishtokafka</artifactId>
-  <version>0.7</version>
+  <version>0.9</version>
   <packaging>hpi</packaging>
 
   <properties>

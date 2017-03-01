@@ -19,10 +19,8 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,11 +75,9 @@ public class PublishToKafkaBuilder extends Recorder {
     	boolean result = true;
         
     	if(!isExcludePlugin()) {
-    		EnvVars envVars = new EnvVars();
-    		JSONObject buildJob = buildJobToJson(build, envVars, listener);
+    		JSONObject buildJob = buildJobToJson(build, listener);
         	listener.getLogger().println(buildJob.toString());
     		
-        	envVars = null;
         	// Publish to Kafka
         	result = publishToKafkaTopic(buildJob, listener);
         	if(result == false) {
@@ -98,11 +94,10 @@ public class PublishToKafkaBuilder extends Recorder {
      * Creates a JSON object with the current execution data of a build job.
      * 
      * @param build
-     * @param envVars
      * @param listener
      * @return JSONObject
      */
-    private JSONObject buildJobToJson(AbstractBuild build, EnvVars envVars, BuildListener listener) {
+    private JSONObject buildJobToJson(AbstractBuild build, BuildListener listener) {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("buildNumber", build.getNumber());
 		jsonObject.put("name", build.getFullDisplayName().substring(0, build.getFullDisplayName().lastIndexOf(" #")));
@@ -115,7 +110,7 @@ public class PublishToKafkaBuilder extends Recorder {
 		addParameters(build, jsonObject);
 		
 		try {
-			envVars = build.getEnvironment(listener);
+			EnvVars envVars = build.getEnvironment(listener);
 			
 			jsonObject.put("userId", envVars.get("BUILD_USER_ID"));
 			jsonObject.put("username", envVars.get("BUILD_USER"));
@@ -143,8 +138,9 @@ public class PublishToKafkaBuilder extends Recorder {
     	Map<String, String> buildVariables = build.getBuildVariables();
 		if(buildVariables.size() > 0) {
 			JSONObject parametersJsonObject = new JSONObject();
-			for(String key: buildVariables.keySet()) {
-				parametersJsonObject.put(key, buildVariables.get(key));
+			for(Map.Entry<String, String> entry : buildVariables.entrySet()) {
+				parametersJsonObject.put(entry.getKey(), 
+										buildVariables.get(entry.getValue()));
 			}
 			jsonObject.put("parameters", parametersJsonObject);
 		}
@@ -183,11 +179,9 @@ public class PublishToKafkaBuilder extends Recorder {
      * @return The node name
      */
     private String getComputerNameFromJenkinsUrl(String jenkinsUrl) {
-		String computerName = new String();
-		
 		// Get the name + port
 		String[] urlTokens = jenkinsUrl.split("/");
-		computerName = urlTokens[2];
+		String computerName = urlTokens[2];
 		// Remove port (if any)
 		int portPosition = computerName.indexOf(":");
 		if(portPosition != -1) {

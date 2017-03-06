@@ -18,22 +18,29 @@ public class SimpleKafkaProducer {
 	/**
 	 * Default constructor.
 	 */
-	public SimpleKafkaProducer(String bootstapServers, 
-			String metadataBrokerList, String acks) {
-		init(bootstapServers, metadataBrokerList, acks);
+	public SimpleKafkaProducer(KafkaProducerConfiguration producerConfig) {
+		init(producerConfig);
 	}
 	
 	/**
 	 * Initializes the class.
 	 */
-	private void init(String bootstapServers, 
-			String metadataBrokerList, String acks) {
+	private void init(KafkaProducerConfiguration producerConfig) {
 		Properties props = new Properties();
-		props.put("bootstrap.servers", bootstapServers);
-		props.put("metadata.broker.list", metadataBrokerList);
+		props.put("bootstrap.servers", producerConfig.getBootstrapServers());
+		props.put("metadata.broker.list", producerConfig.getMetadataBrokerList());
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-		props.put("acks", acks);
+		props.put("acks", producerConfig.getAcks());
+		
+		// Set up advanced properties
+		props.put("retries", String.valueOf(producerConfig.getRetries()));
+		props.put("client.id", producerConfig.getClientId());
+		props.put("connections.max.idle.ms", String.valueOf(producerConfig.getConnectionsMaxIdle()));
+		props.put("request.timeout.ms", String.valueOf(producerConfig.getRequestTimeout()));
+		props.put("timeout.ms", String.valueOf(producerConfig.getTimeout()));
+		props.put("metadata.fetch.timeout.ms", String.valueOf(producerConfig.getMetadataFetchTimeout()));
+		props.put("metadata.max.age.ms", String.valueOf(producerConfig.getMetadataMaxAge()));
 		
 		producer = new KafkaProducer<String, String>(props);
 	}

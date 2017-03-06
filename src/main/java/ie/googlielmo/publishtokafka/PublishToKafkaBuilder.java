@@ -3,6 +3,7 @@ import hudson.Launcher;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.util.FormValidation;
+import ie.googlielmo.publishtokafka.kafka.KafkaProducerConfiguration;
 import ie.googlielmo.publishtokafka.kafka.SimpleKafkaProducer;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -56,18 +57,43 @@ public class PublishToKafkaBuilder extends Recorder {
     /** Flag to modify the build job execution status: 
      * if checked, any failure in the plugin execution will mark the build job as failed. */
     private final boolean changeBuildStatus;
-    
+    /** The number of attempts the producer has to do when sending messages. */
+    private final int retries;
+    /** A string id to pass to the Kafka server when making requests in order to be able then to track the source of requests.*/
+    private final String clientId;
+    /** Idle connections automatically close after the number of milliseconds specified in this field. */
+	private final long connectionsMaxIdle;
+	/** The maximum amount of time (in milliseconds) the client will wait for the response of a request. */
+	private final int requestTimeout;
+	/** The maximum amount of time (in milliseconds) the Kafka server will wait for acknowledgments from followers. */
+	private final int timeout;
+	/** The maximum time (in milliseconds) to fetch metadata in order to know which servers host the topic's partitions. */
+	private final long metadataFetchTimeout;
+	/** The period of time (in milliseconds) after which a refresh of metadata is forced any way. */
+	private final long metadataMaxAge;
+	
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public PublishToKafkaBuilder(String bootstrapServers, String metadataBrokerList,
     		String acks, String topic, boolean excludePlugin, 
-    		boolean changeBuildStatus) {
+    		boolean changeBuildStatus, int retries,
+    		String clientId, long connectionsMaxIdle,
+    		int requestTimeout, int timeout,
+    		long metadataFetchTimeout, long metadataMaxAge) {
         this.bootstrapServers = bootstrapServers;
         this.metadataBrokerList = metadataBrokerList;
         this.acks = acks;
         this.topic = topic;
         this.excludePlugin = excludePlugin;
         this.changeBuildStatus = changeBuildStatus;
+        
+        this.retries = retries;
+        this.clientId = clientId;
+        this.connectionsMaxIdle = connectionsMaxIdle;
+        this.requestTimeout = requestTimeout;
+        this.timeout = timeout;
+        this.metadataFetchTimeout = metadataFetchTimeout;
+        this.metadataMaxAge = metadataMaxAge;
     }
 
     @Override
@@ -208,8 +234,7 @@ public class PublishToKafkaBuilder extends Recorder {
     	Thread.currentThread().setContextClassLoader(null);
     	SimpleKafkaProducer producer = null;
     	try {
-			producer = new SimpleKafkaProducer(
-					getBootstrapServers(), getMetadataBrokerList(), getAcks());
+    		producer = new SimpleKafkaProducer(initKafkaProducer());
 			// Send the message
 			producer.sendMessage(topic, jsonObject.toString());
 			success = true;
@@ -223,6 +248,28 @@ public class PublishToKafkaBuilder extends Recorder {
 		}
     	
     	return success;
+    }
+    
+    /**
+     * Initializes a Kafka Producer.
+     * 
+     * @return	KafkaProducerConfiguration
+     */
+    private KafkaProducerConfiguration initKafkaProducer() {
+    	KafkaProducerConfiguration producerConfig = new KafkaProducerConfiguration();
+    	
+    	producerConfig.setBootstrapServers(bootstrapServers);
+    	producerConfig.setMetadataBrokerList(metadataBrokerList);
+    	producerConfig.setAcks(acks);
+    	producerConfig.setRetries(retries);
+    	producerConfig.setClientId(clientId);
+    	producerConfig.setConnectionsMaxIdle(connectionsMaxIdle);
+    	producerConfig.setRequestTimeout(requestTimeout);
+    	producerConfig.setTimeout(timeout);
+    	producerConfig.setMetadataFetchTimeout(metadataFetchTimeout);
+    	producerConfig.setMetadataMaxAge(metadataMaxAge);
+    	
+    	return producerConfig;
     }
     
     // Overridden for better type safety.
@@ -256,7 +303,7 @@ public class PublishToKafkaBuilder extends Recorder {
         private String topic;
         private boolean excludePlugin;
         private boolean changeBuildStatus;
-
+        
         /**
          * In order to load the persisted global configuration, you have to 
          * call load() in the constructor.
@@ -334,7 +381,144 @@ public class PublishToKafkaBuilder extends Recorder {
         }
 
         /**
-         * Checks that that provided host/port pairs are valid.
+         * Performs on-the-fly validation of the form field 'retries'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckRetries(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isInteger(value)) {
+            		return FormValidation.error("Please set an integer value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Performs on-the-fly validation of the form field 'connectionsMaxIdle'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckConnectionsMaxIdle(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isLong(value)) {
+            		return FormValidation.error("Please set a numeric value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Performs on-the-fly validation of the form field 'requestTimeout'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckRequestTimeout(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isInteger(value)) {
+            		return FormValidation.error("Please set an integer value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Performs on-the-fly validation of the form field 'timeout'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckTimeout(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isInteger(value)) {
+            		return FormValidation.error("Please set an integer value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Performs on-the-fly validation of the form field 'metadataFetchTimeout'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckMetadataFetchTimeout(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isLong(value)) {
+            		return FormValidation.error("Please set a numeric value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Performs on-the-fly validation of the form field 'metadataMaxAge'.
+         *
+         * @param value
+         *      This parameter receives the value that the user has typed.
+         * @return
+         *      Indicates the outcome of the validation. This is sent to the browser.
+         *      <p>
+         *      Note that returning {@link FormValidation#error(String)} does not
+         *      prevent the form from being saved. It just means that a message
+         *      will be displayed to the user. 
+         */
+        public FormValidation doCheckMetadataMaxAge(@QueryParameter String value)
+                throws IOException, ServletException {
+            if(value != null && !value.equals("")) {
+            	if(!isLong(value)) {
+            		return FormValidation.error("Please set a numeric value");
+            	}
+            }
+            
+            return FormValidation.ok();
+        }
+        /**
+         * Checks that provided host/port pairs are valid.
          * 
          * @param hostPortString The host/port pairs comma separated list as string
          * @return true, if all of the host/port pairs are valid
@@ -366,6 +550,40 @@ public class PublishToKafkaBuilder extends Recorder {
         	return isValid;
         }
         
+        /**
+         * Checks if a string value is an integer.
+         * 
+         * @param inputString The input string to check.
+         * @return	boolean. If true, then the input value is an integer value
+         */
+        public static boolean isInteger(String inputString) {
+            boolean isValidInteger = false;
+            
+            try {
+               Integer.parseInt(inputString);
+               isValidInteger = true;
+            }
+            catch (NumberFormatException ex) {
+               // inputString is not an integer
+            }
+       
+            return isValidInteger;
+         }
+        
+        public static boolean isLong(String inputString) {
+            boolean isValidLong = false;
+            
+            try {
+               Long.parseLong(inputString);
+               isValidLong = true;
+            }
+            catch (NumberFormatException ex) {
+               // inputString is not an long
+            }
+       
+            return isValidLong;
+         }
+        
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types 
             return true;
@@ -389,7 +607,7 @@ public class PublishToKafkaBuilder extends Recorder {
         	excludePlugin = formData.getBoolean("excludePlugin");
         	changeBuildStatus = formData.getBoolean("changeBuildStatus");
         	
-            // ^Can also use req.bindJSON(this, formData);
+        	// ^Can also use req.bindJSON(this, formData);
             //  (easier when there are many fields; need set* methods for this, like setUseFrench)
             save();
             return super.configure(req,formData);
@@ -471,6 +689,10 @@ public class PublishToKafkaBuilder extends Recorder {
 		} else {
 			return changeBuildStatus;
 		}
+	}
+
+	public int getRetries() {
+		return retries;
 	}
 }
 

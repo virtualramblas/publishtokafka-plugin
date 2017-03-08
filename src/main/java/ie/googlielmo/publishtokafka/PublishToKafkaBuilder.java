@@ -7,6 +7,7 @@ import ie.googlielmo.publishtokafka.kafka.KafkaProducerConfiguration;
 import ie.googlielmo.publishtokafka.kafka.SimpleKafkaProducer;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.tasks.Builder;
 import hudson.tasks.Publisher;
@@ -22,6 +23,8 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -144,6 +147,8 @@ public class PublishToKafkaBuilder extends Recorder {
 			jsonObject.put("nodeName", envVars.get("NODE_NAME"));
 			jsonObject.put("computerName", envVars.get("COMPUTERNAME"));
 			
+			addGitInfo(build, jsonObject);
+			
 			addNodeDetails(build, jsonObject, envVars);
 		} catch (IOException e) {
 			listener.getLogger().println("Exception trying to get the env variables: " + e.getMessage());
@@ -170,6 +175,30 @@ public class PublishToKafkaBuilder extends Recorder {
 			}
 			jsonObject.put("parameters", parametersJsonObject);
 		}
+    }
+    
+    /**
+     * Adds the Git details (if any for the build job) to the JSON output.
+     * 
+     * @param build
+     * @param jsonObject
+     */
+    private void addGitInfo(AbstractBuild build, JSONObject jsonObject) {
+    	JSONObject gitDetailsJsonObject = new JSONObject();
+    	
+    	List<Action> actions = (List<Action>) build.getAllActions();
+    	Iterator<Action> actionsIterator = actions.iterator();
+    	while(actionsIterator.hasNext()) {
+    		Action action = actionsIterator.next();
+    		if(action instanceof hudson.plugins.git.util.BuildData) {
+    			// Add Git information to the JSON content
+    			gitDetailsJsonObject.put("remoteURLs", ((hudson.plugins.git.util.BuildData)action).getRemoteUrls());
+    			gitDetailsJsonObject.put("lastBuiltRevision", ((hudson.plugins.git.util.BuildData)action).getLastBuiltRevision());
+    			break;
+    		}
+    	}
+    	
+    	jsonObject.put("gitDetails", gitDetailsJsonObject);
     }
     
     /**
@@ -695,4 +724,3 @@ public class PublishToKafkaBuilder extends Recorder {
 		return retries;
 	}
 }
-

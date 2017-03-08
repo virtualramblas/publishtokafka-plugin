@@ -9,28 +9,36 @@ A Jenkins post-build action plugin to publish build jobs execution data to Kafka
 [Kafka](http://kafka.apache.org/) is an Open Source message broker written in [Scala](http://www.scala-lang.org/) and currently maintained by the [Apache Software Foundation](http://www.apache.org/). It is fast, scalable, and has a modern cluster-centric design aimed to provide strong durability and fault-tolerance guarantees.  
   
 ### Features  
-This plugin publishes the build jobs execution details in JSON format to a Kafka topic. In the latest release the general info about a build job, details about the host (master or slave) where a build job has been executed and the full set of parameters values for a given execution are collected. Future releases will collect also all of the details about each single build step.  Here's an example of the current JSON message content sent to a topic:  
+This plugin publishes the build jobs execution details in JSON format to a Kafka topic. In the current release the general info about a build job, details about the host (master or slave) where a build job has been executed, the full set of parameters values for a given execution and the Git build data are collected. Future releases will collect also all of the details for each single build step.  Here's an example of the current JSON message content sent to a topic:  
   
 ```json  
 {
-	"buildNumber":22,
+	"buildNumber":7,
 	"name":"KTest",
 	"startDate":{
-		"date":1,"day":3,"hours":13,"minutes":11,"month":2,"seconds":14,
-		"time":1488373874299,"timezoneOffset":0,"year":117
+		"date":8,"day":3,"hours":12,"minutes":14,"month":2,"seconds":57,
+		"time":1488975297587,"timezoneOffset":0,"year":117
 	},
 	"endDate":{
-		"date":1,"day":3,"hours":13,"minutes":11,"month":2,"seconds":15,
-		"time":1488373875984,"timezoneOffset":0,"year":117
+		"date":8,"day":3,"hours":12,"minutes":15,"month":2,"seconds":10,
+		"time":1488975310027,"timezoneOffset":0,"year":117
 	},
-	"duration":1685,
+	"duration":12440,
 	"result":"SUCCESS",
 	"parameters":{
-		"MONGODB_HOST":"mongodb1.xxx.com",
-		"MONGODB_PORT":"27018"
-	},
+        "MONGODB_HOST":"mongodb1.xxx.com",
+        "MONGODB_PORT":"27018"
+    },
 	"nodeName":"master",
-	"computerName":"XXXXXXXX",
+	"computerName":"XXXXXXXXX",
+	"gitDetails":{
+		"remoteURLs":["https://github.com/virtualramblas/publishtokafka-plugin.git"],
+		"lastBuiltRevision":{
+			"branches":[{"SHA1":{"firstByte":73,"name":"493ce83487eef93bb119a618ce62811f79fdb26a"},"SHA1String":"493ce83487eef93bb119a618ce62811f79fdb26a","name":"refs/remotes/origin/master"}],
+			"sha1":{"firstByte":73,"name":"493ce83487eef93bb119a618ce62811f79fdb26a"},
+			"sha1String":"493ce83487eef93bb119a618ce62811f79fdb26a"
+		}
+	},
 	"nodeDetails":{
 		"nodeLabels":"master",
 		"OS":"Windows_NT",
@@ -38,13 +46,12 @@ This plugin publishes the build jobs execution details in JSON format to a Kafka
 		"processorArchitecture":"x86",
 		"processorArchitectureW6432":"AMD64",
 		"processorIdentifier":"Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
-		"computerName":"XXXXXXXX"
+		"computerName":"XXXXXXXXX"
 	}
 }  
 ```  
   
-After publishing them to the destination topic they can then be consumed by other systems in order to generate stats and/or perform analytics upon them.  
-At the moment just a small set of parameters can be configured for the underlying Kafka producer. Future releases will allow a more advanced configuration.
+After publishing to the destination topic data can then be consumed by other systems in order to generate stats and/or perform analytics.  
   
 ### How to build and install it  
 The plugin project has been initially created from scratch through [Maven](https://maven.apache.org/) (same as for the other available Jenkins plugins), so you need Maven in order to build it starting from the source code. Please read this [post](http://googlielmo.blogspot.ie/2015/07/implementing-jenkins-plugin-from.html) in my personal blog in order to understand how to set up Maven to work locally with Jenkins plugins.    

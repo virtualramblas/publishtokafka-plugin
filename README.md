@@ -34,7 +34,9 @@ This plugin publishes the build jobs execution details in JSON format to a Kafka
 	"gitDetails":{
 		"remoteURLs":["https://github.com/virtualramblas/publishtokafka-plugin.git"],
 		"lastBuiltRevision":{
-			"branches":[{"SHA1":{"firstByte":73,"name":"493ce83487eef93bb119a618ce62811f79fdb26a"},"SHA1String":"493ce83487eef93bb119a618ce62811f79fdb26a","name":"refs/remotes/origin/master"}],
+			"branches":[{"SHA1":{"firstByte":73,"name":"493ce83487eef93bb119a618ce62811f79fdb26a"},
+"SHA1String":"493ce83487eef93bb119a618ce62811f79fdb26a",
+"name":"refs/remotes/origin/master"}],
 			"sha1":{"firstByte":73,"name":"493ce83487eef93bb119a618ce62811f79fdb26a"},
 			"sha1String":"493ce83487eef93bb119a618ce62811f79fdb26a"
 		}
@@ -71,7 +73,8 @@ Then you can install it on your server simply uploading it through the *Manage J
 I didn't use intentionally any Java 8 feature while implementing this plugin in order to ensure compatibility with Jenkins servers still running on JVM 7 as well. 
   
 ### Releases 
-3 releases are available so far:  
+4 releases available so far:  
+* 1.0: Implemented enhancements [#10](https://github.com/virtualramblas/publishtokafka-plugin/issues/10) and [#11](https://github.com/virtualramblas/publishtokafka-plugin/issues/11). Code refactoring.  
 * 0.9: Fixed bug [#8](https://github.com/virtualramblas/publishtokafka-plugin/issues/8). Implemented enhancement [#7](https://github.com/virtualramblas/publishtokafka-plugin/issues/7) and change request [#6](https://github.com/virtualramblas/publishtokafka-plugin/issues/6).  
 * 0.8: Fixed bug [#4](https://github.com/virtualramblas/publishtokafka-plugin/issues/4) . Implemented enhancements [#1](https://github.com/virtualramblas/publishtokafka-plugin/issues/1) and [#2](https://github.com/virtualramblas/publishtokafka-plugin/issues/2)  
 * 0.7: initial release

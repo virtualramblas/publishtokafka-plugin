@@ -72,6 +72,9 @@ In order to produce the *.hpi* installer run the following Maven command:
 Then you can install it on your server simply uploading it through the *Manage Jenkins -> Manage Plugins-> Advanced* tab of the Jenkins dashboard.  
 I didn't use intentionally any Java 8 feature while implementing this plugin in order to ensure compatibility with Jenkins servers still running on JVM 7 as well. 
   
+### Wiki  
+Please have a look at this plugin's [Wiki](https://github.com/virtualramblas/publishtokafka-plugin/wiki) for more detailed info.  
+  
 ### Releases 
 4 releases available so far:  
 * 1.0: Implemented enhancements [#10](https://github.com/virtualramblas/publishtokafka-plugin/issues/10) and [#11](https://github.com/virtualramblas/publishtokafka-plugin/issues/11). Code refactoring.  

@@ -30,27 +30,37 @@
   </f:entry>
 	  
   <f:advanced>
-    <f:entry title="Number of Retries" field="retries">
-    	<f:textbox default="0"/>
-	</f:entry>
-	<f:entry title="Client Id" field="clientId">
-    	<f:textbox />
-	</f:entry>
-	<f:entry title="Max Idle Time (msec)" field="connectionsMaxIdle">
-    	<f:textbox default="540000"/>
-	</f:entry>
-	<f:entry title="Request Timeout (msec)" field="requestTimeout">
-    	<f:textbox default="30000"/>
-	</f:entry>
-	<f:entry title="Timeout (msec)" field="timeout">
-    	<f:textbox default="30000"/>
-	</f:entry>
-	<f:entry title="Metadata Fetch Timeout (msec)" field="metadataFetchTimeout">
-    	<f:textbox default="60000"/>
-	</f:entry>
-	<f:entry title="Metadata Max Age (msec)" field="metadataMaxAge">
-    	<f:textbox default="300000"/>
-	</f:entry>
+  	<f:section title="Advanced Message Content Options">
+	  	<f:entry title="Include Unit Tests Summary" field="fetchUnitTestsResults">
+		    <f:checkbox />
+		</f:entry>
+	<!--<f:entry title="Include builders details" field="includeBuilderDetails">
+      <f:checkbox />
+    </f:entry>-->
+    </f:section>
+  	<f:section title="Advanced Kafka Options">
+	    <f:entry title="Number of Retries" field="retries">
+	    	<f:textbox default="0"/>
+		</f:entry>
+		<f:entry title="Client Id" field="clientId">
+	    	<f:textbox />
+		</f:entry>
+		<f:entry title="Max Idle Time (msec)" field="connectionsMaxIdle">
+	    	<f:textbox default="540000"/>
+		</f:entry>
+		<f:entry title="Request Timeout (msec)" field="requestTimeout">
+	    	<f:textbox default="30000"/>
+		</f:entry>
+		<f:entry title="Timeout (msec)" field="timeout">
+	    	<f:textbox default="30000"/>
+		</f:entry>
+		<f:entry title="Metadata Fetch Timeout (msec)" field="metadataFetchTimeout">
+	    	<f:textbox default="60000"/>
+		</f:entry>
+		<f:entry title="Metadata Max Age (msec)" field="metadataMaxAge">
+	    	<f:textbox default="300000"/>
+		</f:entry>
+	</f:section>
   </f:advanced>
 
 </j:jelly>

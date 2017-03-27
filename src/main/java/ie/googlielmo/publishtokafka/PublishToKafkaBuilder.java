@@ -74,6 +74,7 @@ public class PublishToKafkaBuilder extends Recorder {
 	private final long metadataFetchTimeout;
 	/** The period of time (in milliseconds) after which a refresh of metadata is forced any way. */
 	private final long metadataMaxAge;
+	private final boolean fetchUnitTestsResults;
 	
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -82,7 +83,8 @@ public class PublishToKafkaBuilder extends Recorder {
     		boolean changeBuildStatus, int retries,
     		String clientId, long connectionsMaxIdle,
     		int requestTimeout, int timeout,
-    		long metadataFetchTimeout, long metadataMaxAge) {
+    		long metadataFetchTimeout, long metadataMaxAge,
+    		boolean fetchUnitTestsResults) {
         this.bootstrapServers = bootstrapServers;
         this.metadataBrokerList = metadataBrokerList;
         this.acks = acks;
@@ -97,6 +99,8 @@ public class PublishToKafkaBuilder extends Recorder {
         this.timeout = timeout;
         this.metadataFetchTimeout = metadataFetchTimeout;
         this.metadataMaxAge = metadataMaxAge;
+        
+        this.fetchUnitTestsResults = fetchUnitTestsResults;
     }
 
     @Override
@@ -106,7 +110,7 @@ public class PublishToKafkaBuilder extends Recorder {
     	if(!isExcludePlugin()) {
     		JSONObject buildJob = buildJobToJson(build, listener);
         	listener.getLogger().println(buildJob.toString());
-    		
+        	
         	// Publish to Kafka
         	result = publishToKafkaTopic(buildJob, listener);
         	if(result == false) {
@@ -150,6 +154,10 @@ public class PublishToKafkaBuilder extends Recorder {
 			addGitInfo(build, jsonObject);
 			
 			addNodeDetails(build, jsonObject, envVars);
+			
+			if(isFetchUnitTestsResults()) {
+        		addUnitTestResults(build, jsonObject);
+        	}
 		} catch (IOException e) {
 			listener.getLogger().println("Exception trying to get the env variables: " + e.getMessage());
 		} catch (InterruptedException e) {
@@ -184,21 +192,36 @@ public class PublishToKafkaBuilder extends Recorder {
      * @param jsonObject
      */
     private void addGitInfo(AbstractBuild build, JSONObject jsonObject) {
-    	JSONObject gitDetailsJsonObject = new JSONObject();
-    	
     	List<Action> actions = (List<Action>) build.getAllActions();
     	Iterator<Action> actionsIterator = actions.iterator();
     	while(actionsIterator.hasNext()) {
     		Action action = actionsIterator.next();
     		if(action instanceof hudson.plugins.git.util.BuildData) {
+    			JSONObject gitDetailsJsonObject = new JSONObject();
     			// Add Git information to the JSON content
     			gitDetailsJsonObject.put("remoteURLs", ((hudson.plugins.git.util.BuildData)action).getRemoteUrls());
     			gitDetailsJsonObject.put("lastBuiltRevision", ((hudson.plugins.git.util.BuildData)action).getLastBuiltRevision());
+    			jsonObject.put("gitDetails", gitDetailsJsonObject);
+    			
     			break;
     		}
     	}
-    	
-    	jsonObject.put("gitDetails", gitDetailsJsonObject);
+    }
+    
+    /**
+     * Adds to the JSON output a short summary of unit tests (if any) executed for the current build.
+     * 
+     * @param build
+     * @param jsonObject
+     */
+    private void addUnitTestResults(AbstractBuild build, JSONObject jsonObject) {
+    	if(build.getAction(hudson.tasks.junit.TestResultAction.class) != null) {
+    		JSONObject gitDetailsJsonObject = new JSONObject();
+    		gitDetailsJsonObject.put("totalCount", build.getAction(hudson.tasks.junit.TestResultAction.class).getTotalCount());
+    		gitDetailsJsonObject.put("failCount", build.getAction(hudson.tasks.junit.TestResultAction.class).getFailCount());
+    		gitDetailsJsonObject.put("skipCount", build.getAction(hudson.tasks.junit.TestResultAction.class).getSkipCount());
+    		jsonObject.put("unitTestResults", gitDetailsJsonObject);
+    	}
     }
     
     /**
@@ -722,5 +745,9 @@ public class PublishToKafkaBuilder extends Recorder {
 
 	public int getRetries() {
 		return retries;
+	}
+
+	public boolean isFetchUnitTestsResults() {
+		return fetchUnitTestsResults;
 	}
 }

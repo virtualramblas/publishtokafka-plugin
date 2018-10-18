@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked
  * and a new {@link PublishToKafkaBuilder} is created. The created
  * instance is persisted to the project configuration XML by using
- * XStream, so this allows you to use instance fields (like {@link #name})
+ * XStream, so this allows you to use instance fields (like {@link #topic})
  * to remember the configuration.
  *
  * <p>

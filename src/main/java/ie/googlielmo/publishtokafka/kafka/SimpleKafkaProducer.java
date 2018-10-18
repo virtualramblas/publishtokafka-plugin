@@ -17,6 +17,7 @@ public class SimpleKafkaProducer {
     
 	/**
 	 * Default constructor.
+	 * @param producerConfig The configuration
 	 */
 	public SimpleKafkaProducer(KafkaProducerConfiguration producerConfig) {
 		init(producerConfig);

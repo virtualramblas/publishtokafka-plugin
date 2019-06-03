@@ -2,6 +2,8 @@
   
 A Jenkins post-build action plugin to publish build jobs execution data to Kafka topics.  
   
+_** UPDATE May 2019: I am no more maintaining this plugin. Please feel free to fork it and contribute to it any way if you find it useful for your purposes, but unfortunately I can't assist any more, due to other priorities. Thanks. **_  
+    
 ### What's Jenkins?  
 [Jenkins](https://jenkins.io/) is probably the leading Open Source automation server, implemented in Java. It provides continuous integration services and hundreds of plugins to support building, deploying and automating any project. You can extend the Jenkins features writing your own custom plugins.    
   
